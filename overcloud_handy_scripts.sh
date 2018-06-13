@@ -1,49 +1,45 @@
-*****************************************
-To Delete ALL the Baremetal/Ironic nodes:
-*****************************************
-#V1
+###################################################
+#SCRIPT1: To Delete ALL the Baremetal/Ironic nodes:
+###################################################
+# V1: delete all nodes
 for i in `openstack baremetal node list | awk '{print $2}' | awk 'NR>3'`;do openstack baremetal node delete $i; done
 
-#V2
-for node in $(openstack baremetal node list --fields uuid -f value) ; do openstack baremetal node delete $node ; done
+# V2: Set ironic nodes to manageable state
+for node in $(openstack baremetal node list --fields uuid -f value) ; do openstack baremetal node manage $node ; done
 
-*******************************
-Ipmitool Power of all servers:
-*******************************
-for i in 109 110 111 112 113 114 115 116 117
+##########################################################
+#SCRIPT2: Ipmitool Power off/check status all the servers:
+##########################################################
+# Last octet of IDRAC IPs sequentially
+for i in 117 109 110 111 112 113 114 115 116
   do ipmitool -H 10.118.147.$i -v -I lanplus -U root -P calvin chassis power off;
 done
 
-************************************************************
-Check the failed deployments analysing heat stack resources:
-************************************************************
-# V1:Deprecated:
-source stackrc
-for failed_deployment in $(heat resource-list --nested-depth 5 overcloud | grep FAILED | grep -E 'OS::Heat::SoftwareDeployment |OS::Heat::StructuredDeployment ' | cut -d '|' -f 3); do
-        echo $failed_deployment;
-        heat deployment-show $failed_deployment;
-done
+# Check power status
+for i in 117 109 110 113 114 115 116; do ipmitool -H 10.118.147.$i -v -I lanplus -U root -P calvin chassis power status; done
 
-# V2:Latest with OpenStack client
+##############################################################################################
+#SCRIPT3: Check the failed deployments analysing heat stack resources for SOFTWARE DEPLOYMENTS
+##############################################################################################
+# V1: Using OpenStack client
 source stackrc
 for failed_deployment in $(openstack stack resource list --nested-depth 5 overcloud | grep FAILED | grep -E 'OS::Heat::SoftwareDeployment |OS::Heat::StructuredDeployment ' | cut -d '|' -f 3); do
         echo $failed_deployment;
         openstack software deployment show $failed_deployment;
 done
 
-# V3: Heat stack/resource analysis step by step, to debug Overcloud Stack
-openstack stack list --nested | grep FAILED
-It will lists lots of nested stacks and main stack is listed at last(that is our overcloud stack)
+# V2: Using Deprecated client
+source stackrc
+for failed_deployment in $(heat resource-list --nested-depth 5 overcloud | grep FAILED | grep -E 'OS::Heat::SoftwareDeployment |OS::Heat::StructuredDeployment ' | cut -d '|' -f 3); do
+        echo $failed_deployment;
+        heat deployment-show $failed_deployment;
+done
 
-openstack stack resource list bf2ce49d-f678-47ae-9edb-aa744a2b46a1
-It will lists resource and their status. Look for the one which is in failed state
-The valuable information for us here, is the physical_resource_id.This helps in finding out why our deployment failed.
 
-openstack software deployment show PHYSICAL-RESOURCE-ID --long
-Look for status reason field here which will give you clue.
+#######################################################
+#SCRIPT4: to filter out actual configurations in a file
+#######################################################
+cat undercloud.conf | grep -v ^# | grep -v ^$
 
-***********************************************************
-Set all baremetal nodes to manageable state in Provisiong:
-***********************************************************
-for node in $(openstack baremetal node list --fields uuid -f value) ; do openstack baremetal node manage $node ; done
+
 
