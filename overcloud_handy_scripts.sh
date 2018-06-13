@@ -1,7 +1,10 @@
-*************************************
-To Delete the Baremetal/Ironic nodes:
-*************************************
+*****************************************
+To Delete ALL the Baremetal/Ironic nodes:
+*****************************************
+#V1
 for i in `openstack baremetal node list | awk '{print $2}' | awk 'NR>3'`;do openstack baremetal node delete $i; done
+
+#V2
 for node in $(openstack baremetal node list --fields uuid -f value) ; do openstack baremetal node delete $node ; done
 
 *******************************
