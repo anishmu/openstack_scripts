@@ -42,9 +42,9 @@ done
 cat undercloud.conf | grep -v ^# | grep -v ^$
 
 
-####################################
-# TAGGING NODES INTO PROFILES
-####################################
+#####################################
+#SCRIPT5: TAGGING NODES INTO PROFILES
+#####################################
 #sequentially node UUID is considered at 3rd awk with arg NR == <SL. NO>
 # control
 openstack baremetal node set --property capabilities='profile:control,boot_option:local' `openstack baremetal node list | awk '{print $2}' | awk 'NR >3' | awk 'NR == 1 {print $1}'`
