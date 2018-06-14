@@ -1,2 +1,2 @@
 # openstack_scripts
-scripts to automate some tasks
+automation scripts to save manaul efforts and time 
