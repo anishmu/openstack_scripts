@@ -12,11 +12,11 @@ for node in $(openstack baremetal node list --fields uuid -f value) ; do opensta
 ##########################################################
 # Last octet of IDRAC IPs sequentially
 for i in 117 109 110 111 112 113 114 115 116
-  do ipmitool -H 10.118.147.$i -v -I lanplus -U root -P calvin chassis power off;
+  do ipmitool -H X.X.X.$i -v -I lanplus -U root -P calvin chassis power off;
 done
 
 # Check power status
-for i in 117 109 110 113 114 115 116; do ipmitool -H 10.118.147.$i -v -I lanplus -U root -P calvin chassis power status; done
+for i in 117 109 110 113 114 115 116; do ipmitool -H X.X.X.$i -v -I lanplus -U root -P calvin chassis power status; done
 
 ##############################################################################################
 #SCRIPT3: Check the failed deployments analysing heat stack resources for SOFTWARE DEPLOYMENTS
