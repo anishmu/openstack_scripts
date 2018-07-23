@@ -1,0 +1,99 @@
+#Subscription enbale command for RHSOP#10 packages from CDN.
+  sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms \
+    --enable=rhel-7-server-openstack-10-rpms --enable=rhel-7-server-satellite-tools-6.2-rpms --enable=rhel-7-server-rhceph-2-osd-rpms \
+    --enable=rhel-7-server-rhceph-2-mon-rpms --enable=rhel-7-server-rhceph-2-tools-rpms
+
+#Root command list all openstack service status.
+  sudo systemctl list-units openstack*
+  sudo systemctl list-units neutron*
+
+#Ironic:-
+  openstack overcloud node import instackenv.json
+  openstack overcloud node introspect --all-manageable --provide
+  openstack baremeta node list
+  openstack baremetal driver list
+  openstack baremetal node set --property capabilities='profile:controller,boot_option:local' 0d25a74e-3966-4186-87ed-841fc246630e
+  openstack baremetal node set --property capabilities='profile:compute,boot_option:local' 1c18159d-05e6-4414-8fa3-ac505314fb25
+  openstack baremetal introspection data save  0d25a74e-3966-4186-87ed-841fc246630e | jq ".inventory.disks"           ########### Shows all disks of the node 
+  openstack baremetal node set --property root_device='{"serial":"61866da0bcd6090022ba57701c4daa1b"}' 0d25a74e-3966-4186-87ed-841fc246630e     ###### Set-root disk for the ironic node
+  openstack baremeta node delete 0d25a74e-3966-4186-87ed-841fc246630e
+  for i in `openstack baremetal node list | awk '{print $2}' | awk 'NR>3'`;do openstack baremetal node delete $i; done
+  ironic node-update 0d25a74e-3966-4186-87ed-841fc246630e remove instance_uuid
+  sudo systemctl <stop, start or status> openstack-ironic-api.service openstack-ironic-conductor.service openstack-ironic-inspector-dnsmasq.service openstack-ironic-inspector.service
+
+#Compute:-
+  nova list
+  openstack compute service list
+  openstack flavor create --public control --id auto --ram 4096 --disk 0 --vcpus 4 --rxtx-factor 1
+  openstack flavor set --property "cpu_arch"="x86_64" --property "capabilities:boot_option"="local" --property "capabilities:profile"="control" control
+  nova aggregate-create <HOST-AGG-NAME> <AVAIL-ZONE-NAME>    ######Create Host Aggregate With Availability Zone
+  nova aggregate-add-host <HOST-AGG-ID> <COMPUTE-HOST-NAME>  ######Add Compute Host to Host Aggregate
+  sudo systemctl <stop, start or status> openstack-nova-api.service openstack-nova-compute.service openstack-nova-conductor.service openstack-nova-scheduler.service openstack-nova-cert.service
+  sudo systemctl <stop, start or status> libvirtd.service 
+
+#Cinder
+  cinder service-list
+  cinder create --display-name <CINDER-IMAGE-DISPLAY-NAME> <SIZE-IN-GB>
+  cinder create --image-id <GLANCE-IMAGE-ID> --display-name <CINDER-IMAGE-DISPLAY-NAME> <SIZE-IN-GB>
+  cinder snapshot-create --display-name <SNAPSHOT-DISPLAY-NAME> <CINDER-VOLUME-ID>
+  cinder snapshot-create --display-name <SNAPSHOT-DISPLAY-NAME> <CINDER-VOLUME-ID> --force True
+  sudo systemctl <stop, start or status> openstack-cinder-scheduler.service openstack-cinder-volume.service openstack-cinder-api.service
+
+#Neutron:-
+  neutron agent-list
+  neutron net-list
+  neutron net-create <NET-NAME>
+  neutron net-create <NET-NAME> --provider:physical_network=<LABEL-PHYSICAL-INTERFACE> --provider:network_type=<flat or vlan> --shared --router:external=True
+  neutron subnet-list
+  neutron subnet-create --name <SUBNET-NAME> <NET-NAME> <SUBNET-CIDR>
+  neutron subnet-create --name <SUBNET-NAME> <NET-NAME> <SUBNET-CIDR>  --gateway <GATEWAY-IP> --allocation-pool start=<STARTING-IP>,end=<ENDING-IP> --dns-nameservers list=true <DNS-1 DNS-2>
+  neutron security-group-create <SEC-GROUP-NAME>
+  neutron security-group-rule-create --direction <ingress OR egress> --ethertype <IPv4 or IPv6> --protocol <PROTOCOL> --port-range-min <PORT-NUMBER> --port-range-max <PORT-NUMBER> <SEC-GROUP-NAME>
+  neutron router-create <ROUTER-NAME>
+  openstack router list
+  neutron router-gateway-set <ROUTER-NAME> <NET-NAME>
+  neutron router-interface-add <ROUTER-NAME> <SUBNET-NAME>
+  neutron floatingip-create <NET-NAME>
+  neutron floatingip-associate <FLOATING-IP-ID> <NEUTRON-PORT-ID>
+  neutron port-create <NET-NAME> --fixed-ip ip_address=<IP-ADDRESS>
+  neutron quota-update --tenant-id=<PROJECT ID> --port -1 ########## To allowed unlimited number of ports 
+  systemctl <stop, start or status> neutron-openvswitch-agent.service neutron-metadata-agent.service neutron-l3-agent.service neutron-dhcp-agent.service
+
+#Rabbitmq:-
+  sudo rabbitmqctl status
+
+#OpenStack Services API and Openstack Endpoint
+  openstack user list 
+  openstack catalog list
+  openstack endpoint list
+  openstack service list
+
+#Heat:-
+  openstack stack list
+  openstack stack show <stack-name>
+  openstack stack resource show overcloud
+  openstack stack resource list overcloud
+  openstack stack resource list overcloud | grep IN_PROGRESS
+  openstack stack list  --nested | grep FAIL
+  openstack stack resource list <overcloud-stack-id> | grep FAIL
+  openstack software deployment show <overcloud-stack-id> --long
+  heat-manage service clean #CLEANS DEAD ENGINES WORKERS
+  openstack stack failures list overcloud --long
+
+#Pacemaker:-
+  sudo systemctl status pacemaker
+  sudo pcs cluster status
+  sudo pcs status  ####### If any error in this command output like <Failed Actions:> then execute below command and check status again.
+  sudo crm_resource -P
+
+#OpenvSwitch
+  ovs-vsctl show
+  ovs-vsctl add-br br-ex
+  ovs-vsctl add-port br-ex eth0
+  ovs-opctl ip address
+  ovs-ofctl show br-ex
+  ovs-appctl fdb/show br-ex
+  ovs-dpctl show br-int
+  ovs-dpctl dump-flows br-int | grep "xx.xx.xx.xx"
+  
+  
