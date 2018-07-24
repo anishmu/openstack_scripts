@@ -23,6 +23,7 @@
 
 #Compute:-
   nova list
+  openstack server create --flavor test --image cirros --nic net-id=5487cd69-a8e5-4870-aabe-96c752ae243d --security-group default --key-name key1 test-vm
   openstack compute service list
   openstack flavor create --public control --id auto --ram 4096 --disk 0 --vcpus 4 --rxtx-factor 1
   openstack flavor set --property "cpu_arch"="x86_64" --property "capabilities:boot_option"="local" --property "capabilities:profile"="control" control
