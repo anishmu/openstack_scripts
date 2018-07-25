@@ -31,6 +31,10 @@
   nova aggregate-add-host <HOST-AGG-ID> <COMPUTE-HOST-NAME>  ######Add Compute Host to Host Aggregate
   sudo systemctl <stop, start or status> openstack-nova-api.service openstack-nova-compute.service openstack-nova-conductor.service openstack-nova-scheduler.service openstack-nova-cert.service
   sudo systemctl <stop, start or status> libvirtd.service 
+#nova boot --image `nova image-list | awk '/ cirros_0.3.4 / {print $2}'` --flavor 1 --availability-zone=nova:openstack-aio --key-name kabali-key --nic net-id=`neutron net-list | awk '/ private-net1 / {print $2}'` aio-vm1
+#nova boot --image `nova image-list | awk '/ cirros_0.3.4 / {print $2}'` --flavor 1 --availability-zone=nova:openstack-compute --key-name kabali-key --nic net-id=`neutron net-list | awk '/ private-net1 / {print $2}'` compute-vm1
+
+  
 
 #Cinder
   cinder service-list
@@ -59,6 +63,14 @@
   neutron port-create <NET-NAME> --fixed-ip ip_address=<IP-ADDRESS>
   neutron quota-update --tenant-id=<PROJECT ID> --port -1 ########## To allowed unlimited number of ports 
   systemctl <stop, start or status> neutron-openvswitch-agent.service neutron-metadata-agent.service neutron-l3-agent.service neutron-dhcp-agent.service
+  
+neutron net-create public --router:external --shared
+neutron subnet-create public 172.27.3.0/24 --name public-subnet --allocation-pool start=172.27.3.200,end=172.27.3.215 --disable-dhcp --gateway 172.27.3.1
+neutron net-create private-net1
+neutron subnet-create --name private-subnet1 --dns-nameserver 8.8.8.8 private-net1 10.0.0.0/24
+neutron router-create router1
+neutron router-interface-add router1 private-subnet1
+neutron router-gateway-set router1 public
 
 #Rabbitmq:-
   sudo rabbitmqctl status
@@ -97,4 +109,6 @@
   ovs-dpctl show br-int
   ovs-dpctl dump-flows br-int | grep "xx.xx.xx.xx"
   
-  
+#Glance  
+wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+glance image-create --name "cirros_0.3.4" --file cirros-0.3.4-x86_64-disk.img --disk-format qcow2 --container-format bare --visibility public --progress --property architecture=x86_64
