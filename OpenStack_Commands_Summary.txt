@@ -6,6 +6,7 @@
 #Root command list all openstack service status.
   sudo systemctl list-units openstack*
   sudo systemctl list-units neutron*
+  sudo systemctl list-unit-files
 
 #Ironic:-
   openstack overcloud node import instackenv.json
