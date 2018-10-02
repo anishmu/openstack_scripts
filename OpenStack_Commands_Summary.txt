@@ -34,7 +34,7 @@
   sudo systemctl <stop, start or status> libvirtd.service 
 #nova boot --image `nova image-list | awk '/ cirros_0.3.4 / {print $2}'` --flavor 1 --availability-zone=nova:openstack-aio --key-name kabali-key --nic net-id=`neutron net-list | awk '/ private-net1 / {print $2}'` aio-vm1
 #nova boot --image `nova image-list | awk '/ cirros_0.3.4 / {print $2}'` --flavor 1 --availability-zone=nova:openstack-compute --key-name kabali-key --nic net-id=`neutron net-list | awk '/ private-net1 / {print $2}'` compute-vm1
-
+nova availability-zone-list
   
 
 #Cinder
