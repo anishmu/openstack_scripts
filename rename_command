@@ -1,0 +1,2 @@
+for f in *.xml; do mv -- "$f" "${f%.xml}.xmlbkp"; done
+#renames all .xml files to .xmlbkp
